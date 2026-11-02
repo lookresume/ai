@@ -1,697 +1,170 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="AI(GC)内容作品集，用于简历展示，包含图像、视频、文档与方案作品。" />
-    <title>AI内容作品集</title>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="plyr.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历预览</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
     <style>
-        :root {
-            --bg: #0f1115;
-            --bg-soft: #14171c;
-            --panel: #1b1f26;
-            --panel-2: #242933;
-            --border: #2a2f38;
-            --text: #e8eaed;
-            --text-2: #b8c0cc;
-            --muted: #8a93a6;
-            --accent: #64d2ff;
-            --accent-2: #7c5cff;
-            --danger: #ff6b6b;
-            --green: #48c774;
-            --red: #f14668;
-            --radius: 14px;
-            --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-            --sidebar-width: 260px;
-            --sidebar-collapsed-width: 72px;
-        }
-        * {
-            box-sizing: border-box;
+        body, html {
             margin: 0;
             padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #fff;
         }
-        html {
-            scroll-behavior: smooth;
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-                "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-        button {
-            font-family: inherit;
-            cursor: pointer;
-            border: none;
-            background: none;
-            color: inherit;
-        }
-        img, video {
-            display: block;
-            max-width: 100%;
-        }
-        /* ========== 布局 ========== */
-        .app {
-            display: flex;
-            min-height: 100vh;
-        }
-        /* ========== 侧边栏 ========== */
-        .sidebar {
-            width: var(--sidebar-width);
-            flex-shrink: 0;
-            background: var(--panel);
-            border-right: 1px solid var(--border);
-            padding: 28px 16px;
-            position: fixed;
+        #resumeFrame {
+            position: absolute;
             top: 0;
             left: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 50;
-            transition: width 0.3s ease, transform 0.3s ease;
+            width: 100%;
+            height: 100%;
+            border: none;
         }
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-            padding: 28px 10px;
-        }
-        .sidebar.collapsed .sidebar-profile h1,
-        .sidebar.collapsed .sidebar-profile .role,
-        .sidebar.collapsed .sidebar-section-title,
-        .sidebar.collapsed .nav a span,
-        .sidebar.collapsed .sidebar-divider,
-        .sidebar.collapsed .sidebar-footer {
-            display: none;
-        }
-        .sidebar.collapsed .nav a {
-            justify-content: center;
-            padding: 12px 0;
-        }
-        .sidebar.collapsed .avatar {
-            width: 44px;
-            height: 44px;
-            font-size: 18px;
-        }
-        .collapse-btn {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0 6px 12px;
-            color: var(--muted);
-            font-size: 16px;
-        }
-        .sidebar.collapsed .collapse-btn {
-            justify-content: center;
-        }
-        .sidebar-profile {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        .avatar {
-            width: 96px;
-            height: 96px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            margin: 0 auto 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 34px;
+
+        /*  右下角刷新按钮样式 */
+        .refresh-btn {
+            position: fixed;
+            bottom: 70px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 123, 255, 0.8);
             color: white;
-            font-weight: 700;
-            box-shadow: var(--shadow);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transition: all 0.3s ease;
+            z-index: 9999; /* 确保在最上层 */
         }
-        .sidebar-profile h1 {
-            font-size: 18px;
-            margin-bottom: 4px;
+
+        .refresh-btn:hover {
+            background-color: rgba(0, 105, 217, 1);
+            transform: rotate(180deg); /* 悬停时旋转动画 */
         }
-        .sidebar-profile .role {
-            font-size: 13px;
-            color: var(--text-2);
+
+        .refresh-btn i {
+            font-size: 24px;
         }
-        .sidebar-divider {
-            height: 1px;
-            background: var(--border);
-            margin: 18px 0;
-        }
-        .sidebar-section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--muted);
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-        .nav {
-            list-style: none;
-        }
-        .nav li {
-            margin-bottom: 4px;
-        }
-        .nav a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            color: var(--text-2);
-            font-size: 14px;
-            transition: background 0.2s ease, color 0.2s ease;
-        }
-        .nav a i {
-            width: 18px;
-            text-align: center;
-            color: var(--accent);
-        }
-        .nav a:hover,
-        .nav a.active {
-            background: var(--panel-2);
-            color: var(--text);
-        }
-        .sidebar-footer {
-            margin-top: 24px;
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.7;
-        }
-        /* ========== 主内容区 ========== */
-        .main {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: 40px;
-            background: var(--bg);
-            transition: margin-left 0.3s ease;
-        }
-        .sidebar.collapsed + .main {
-            margin-left: var(--sidebar-collapsed-width);
-        }
-        /* ========== 顶部栏 ========== */
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 28px;
-            padding-bottom: 18px;
-            border-bottom: 1px solid var(--border);
-        }
-        .topbar h2 {
-            font-size: 22px;
-        }
-        .topbar p {
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 2px;
-        }
-        .topbar-actions {
-            display: flex;
-            gap: 10px;
-        }
-        /* ========== 按钮 ========== */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 9px 14px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid var(--border);
-            background: var(--panel);
-            color: var(--text);
-            transition: all 0.2s ease;
-        }
-        .btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            border-color: transparent;
-            color: #0b1020;
-        }
-        .btn-primary:hover {
-            filter: brightness(1.08);
-            color: #0b1020;
-        }
-        /* ========== 卡片通用 ========== */
-        .card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 22px;
-            box-shadow: var(--shadow);
-        }
-        .card + .card {
-            margin-top: 20px;
-        }
-        .card h3 {
-            font-size: 17px;
-            margin-bottom: 8px;
-        }
-        .card p {
-            color: var(--text-2);
-            font-size: 14px;
-        }
-        /* ========== 简介区 ========== */
-        .about-grid {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .skill-list {
-            list-style: none;
-            margin-top: 12px;
-        }
-        .skill-list li {
-            padding: 7px 0;
-            font-size: 14px;
-            color: var(--text-2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .skill-list.domestic li::before {
-            content: "";
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--green);
-        }
-        .skill-list.foreign li::before {
-            content: "";
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--red);
-        }
-        /* ========== 作品网格 ========== */
-        .section-title {
-            font-size: 18px;
-            margin: 36px 0 18px;
-            padding-left: 12px;
-            border-left: 4px solid var(--accent);
-        }
-        .works-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 22px;
-        }
-        .work-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            transition: transform 0.25s ease, border-color 0.25s ease;
-            box-shadow: var(--shadow);
-        }
-        .work-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--accent);
-        }
-        .work-media {
-            width: 100%;
-            aspect-ratio: 16 / 10;
-            background: #0b0e14;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .work-media img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        /* plyr视频自适应：自动填满容器，保持比例 */
-        .work-media .plyr {
-            width:100%;
-            height:100%;
-        }
-        .work-media video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .work-media .placeholder {
+
+        .error-message {
+            display: none;
             position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted);
-            font-size: 13px;
-            background: linear-gradient(135deg, #1a1f2b, #262b38);
-        }
-        .work-body {
-            padding: 16px;
-        }
-        .work-body h4 {
-            font-size: 15px;
-            margin-bottom: 6px;
-        }
-        .work-body p {
-            font-size: 13px;
-            color: var(--text-2);
-            margin-bottom: 10px;
-            min-height: 40px;
-        }
-        .work-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-top: 12px;
-        }
-        .work-meta {
-            font-size: 12px;
-            color: var(--muted);
-        }
-        /* ========== 文档列表 ========== */
-        .doc-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
-        }
-        .doc-item {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: border-color 0.2s ease;
-        }
-        .doc-item:hover {
-            border-color: var(--accent);
-        }
-        .doc-item .doc-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-        }
-        .doc-item h4 {
-            font-size: 15px;
-        }
-        .doc-item p {
-            font-size: 13px;
-            color: var(--text-2);
-            flex: 1;
-        }
-        /* ========== 移动端菜单 ========== */
-        .menu-toggle {
-            display: none;
-            position: fixed;
-            top: 14px;
-            left: 14px;
-            z-index: 60;
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-size: 18px;
-        }
-        .mask {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.55);
-            z-index: 40;
-        }
-        .mask.show {
-            display: block;
-        }
-        /* ========== 响应式断点 ========== */
-        @media (max-width: 900px) {
-            .about-grid {
-                grid-template-columns: 1fr;
-            }
-            .main {
-                padding: 24px;
-            }
-        }
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .sidebar {
-                transform: translateX(-100%);
-                width: var(--sidebar-width);
-            }
-            .sidebar.collapsed {
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main {
-                margin-left: 0 !important;
-                padding: 70px 18px 30px;
-            }
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .works-grid,
-            .doc-list {
-                grid-template-columns: 1fr;
-            }
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
-    <button class="menu-toggle" id="menuToggle" aria-label="打开菜单">
-        <i class="fa fa-bars"></i>
-    </button>
-    <div class="mask" id="mask"></div>
-    <div class="app">
-        <!-- ========== 侧边栏 ========== -->
-        <aside class="sidebar" id="sidebar">
-            <div class="collapse-btn">
-                <button id="collapseBtn"><i class="fa fa-angle-double-left"></i></button>
-            </div>
-            <div class="sidebar-profile">
-                <div class="avatar">AI</div>
-                <h1>AI(GC)内容作品集</h1>
-                <div class="role">AIGC创作者 · 内容策划 · 视觉生成</div>
-            </div>
-            <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title">导航</div>
-            <ul class="nav">
-                <li><a href="#about" class="active"><i class="fa fa-user"></i> <span>说明</span></a></li>
-                <li><a href="#image-works"><i class="fa fa-image"></i> <span>图像作品</span></a></li>
-                <li><a href="#video-works"><i class="fa fa-video-camera"></i> <span>视频作品</span></a></li>
-                <li><a href="#docs"><i class="fa fa-file-text-o"></i> <span>文档与方案</span></a></li>
-            </ul>
-            <div class="sidebar-divider"></div>
-            <div class="sidebar-footer">
-                本作品集用于简历展示，汇总 AI 图像、视频、文档与方案类作品
-            </div>
-        </aside>
-        <!-- ========== 主内容区 ========== -->
-        <main class="main">
-            <div class="topbar">
-                <div>
-                    <h2>AI(GC) 内容作品集</h2>
-                    <p>[请PC电脑浏览/访问] 图像 · 视频 · 文档方案</p>
-                </div>
-                <div class="topbar-actions">
-                    <a class="btn btn-primary" href="#image-works"><i class="fa fa-th"></i> 查看</a>
-                </div>
-            </div>
-            <!-- 说明区 -->
-            <section id="about">
-                <div class="about-grid">
-                    <div class="card">
-                        <h3>说明</h3>
-                        <p>
-                            &emsp;&emsp;AI Agent生成内容策划与视觉作品整理；含：文生图、文/图生视频、提示词、工作流搭建等多维度混合设计优化。
-                        </p>
-                        <h3 style="margin-top:18px;">关于</h3>
-                        <ul class="skill-list">
-                            <li>&emsp;&emsp;当前国内外 AI 模型生产力，仍存在瓶颈短板，抽卡概率。AIGC内容，受限GPU显卡/算力，仍偏向资本团队赛道；AI工具简化了，部分创作流程，但选题、策划、剧本等门槛不会降低，需具备导演思维；且主流平台，普遍VIP，面向企业级付费客户；普通人举步维艰，难以重仓投产。</li>
-                        </ul>
-                        <h3 style="margin-top:18px;">核心能力</h3>
-                        <ul class="skill-list">
-                            <li>AI：图像/ 视频生成、风格控制、片段管理、提示词设计优化、内容结构化设计、展示整理</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h3>平台使用</h3>
-                        <div style="margin-top:12px;">
-                            <ul class="skill-list domestic">
-                                <li>豆包、DeepSeek、workbuddy、即梦 AI、小云雀、LibTV</li>
-                            </ul>
-                            <ul class="skill-list foreign">
-                                <li>ChatGPT、Claude、Gemini、Grok、</li>
-                                <li>ComfyUI</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <!-- 图像作品 -->
-            <h2 class="section-title" id="image-works">图像作品</h2>
-           
-            <!-- 视频作品列表卡片 -->
-            <h2 class="section-title" id="video-works">视频作品</h2>
-            <section class="works-grid">
-                <!--卡片一 -->
-                <article class="work-card">
-                    <div class="work-media">
-                        <video class="plyr-video" preload="metadata" playsinline>
-                            <source src="https://workdrive.zohopublic.com.cn/external/fe8f4a9365245052f4994456cd5a2ce15e9dc42ca3a8465da5d1436ef6832dba/download?directDownload=true" type="video/mp4" />
-                            浏览器不支持播放
-                        </video>
-                    </div>
-                    <div class="work-body">
-                        <h4>Vibi知识大赏 | WASD键位起源与秩序</h4>
-                        <p></p>
-                        <div class="work-footer">
-                            <span class="work-meta">MP4</span>
-                            <div></div>
-                        </div>
-                    </div>
-                </article>
-                <!--卡片二 -->
-                <article class="work-card">
-                    <div class="work-media">
-                        <video class="plyr-video" preload="metadata" playsinline>
-                            <source src="https://workdrive.zohopublic.com.cn/external/e417326df9109417ed36d1d1f4073fb21f78953ebfce0ff0d6eb4115733a2b93/download?directDownload=true" type="video/mp4" />
-                            浏览器不支持播放
-                        </video>
-                    </div>
-                    <div class="work-body">
-                        <h4>ComfyUI本地开源模型 | 文生视频</h4>
-                        <p></p>
-                        <div class="work-footer">
-                            <span class="work-meta">MP4</span>
-                            <div></div>
-                        </div>
-                    </div>
-                    
-                </article>
-                 <!--卡片3 -->
-                <article class="work-card">
-                    <div class="work-media">
-                        <video class="plyr-video" preload="metadata" playsinline>
-                            <source src="https://workdrive.zohopublic.com.cn/external/0bf0fc8640b8fe0d275b494003af91ea981da69f1f6b5667c19ae4ff5c41d883/download?directDownload=true" type="video/mp4" />
-                            浏览器不支持播放
-                        </video>
-                    </div>
-                    <div class="work-body">
-                        <h4>AI发展史 | 白板动画 </h4>
-                        <p></p>
-                        <div class="work-footer">
-                            <span class="work-meta">MP4</span>
-                            <div></div>
-                        </div>
-                    </div>
-                    
-                </article>
-            </section>
-            <!-- 文档与方案 -->
-            <h2 class="section-title" id="docs">文档与方案</h2>
-            <section class="doc-list">
-                <div class="doc-item">
-                    <div class="doc-icon"><i class="fa fa-file-text-o"></i></div>
-                    <h4>提示词库/画板/Skill</h4>
-                    <p>分类整理 行业提示词模板、风格词与常见技巧。</p>
-                    <span class="work-meta">文本式</span>
-                </div>
-            </section>
-        </main>
+    <div class="container">
+        <iframe id="resumeFrame" src="https://myresume-1252777009.cos.ap-beijing.myqcloud.com/src/ai/index.html" onload="handleLoad()" onerror="handleError()"></iframe>
+        
+        <div class="refresh-btn" onclick="refreshIframe()" title="刷新内容">
+            <i class="fa fa-refresh"></i>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <h2>抱歉，网页载入失败</h2>
+            <p>请检查网络连接或稍后再试</p>
+            <button onclick="retryLoad()">重试</button>
+        </div>
     </div>
 
-    <!--本地Plyr JS -->
-    <script src="plyr.min.js"></script>
     <script>
-        // 初始化Plyr，仅作用 .plyr‑video，自适应播放器控件
-        const players = Plyr.setup('.plyr-video',{
-            controls: ['play','progress','current-time','mute','volume','fullscreen'],
-            ratio:'16:10'
-        });
-        // 侧边栏折叠/展开逻辑
-        const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('collapseBtn');
-        collapseBtn.onclick = () => {
-            sidebar.classList.toggle('collapsed');
-            const icon = collapseBtn.querySelector('i');
-            if (sidebar.classList.contains('collapsed')) {
-                icon.className = 'fa fa-angle-double-right';
-            } else {
-                icon.className = 'fa fa-angle-double-left';
-            }
+        // 配置项
+        const securityConfig = {
+            disableRightClick: true,
+            disableSave: true,
+            disablePrint: true,
+            disableViewSource: true,
+            disableCopy: false,
+            disablePaste: true,
+            disableSelectAll: true,
+            disableDevTools: true,
+            disableKeyboard: true,
+            disableDrag: true,
+            disableSelect: false
         };
-        // 侧边栏导航点击高亮
-        const navLinks = document.querySelectorAll('.nav a');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-            });
-        });
-        // 页面滚动与导航高亮联动
-        const sections = [
-            { id: 'about' },
-            { id: 'image-works' },
-            { id: 'video-works' },
-            { id: 'docs' }
-        ];
-        window.addEventListener('scroll', () => {
-            const scrollPos = window.scrollY + 120;
-            sections.forEach(section => {
-                const el = document.getElementById(section.id);
-                if (!el) return;
-                const top = el.offsetTop;
-                const bottom = top + el.offsetHeight;
-                if (scrollPos >= top && scrollPos < bottom) {
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    const activeLink = document.querySelector(`.nav a[href="#${section.id}"]`);
-                    if (activeLink) activeLink.classList.add('active');
-                }
-            });
-        });
-        // 移动端响应式侧边栏菜单开关
-        const menuToggle = document.getElementById('menuToggle');
-        const mask = document.getElementById('mask');
-        function openSidebar() {
-            sidebar.classList.add('open');
-            mask.classList.add('show');
+
+        // 4. 刷新 iframe 的核心函数
+        function refreshIframe() {
+            const resumeFrame = document.getElementById('resumeFrame');
+            const btnIcon = document.querySelector('.refresh-btn i');
+            
+            // 添加旋转动画样式类（可选）
+            btnIcon.classList.add('fa-spin');
+            
+            // 重新加载 iframe
+            resumeFrame.src = resumeFrame.src;
+
+            // 加载完成后停止旋转图标
+            resumeFrame.onload = function() {
+                handleLoad();
+                btnIcon.classList.remove('fa-spin');
+            };
         }
-        function closeSidebar() {
-            sidebar.classList.remove('open');
-            mask.classList.remove('show');
+
+        // 初始化安全限制
+        function initSecurityRestrictions() {
+            if (securityConfig.disableRightClick) {
+                document.addEventListener('contextmenu', e => e.preventDefault());
+            }
+            if (securityConfig.disableSelect) {
+                document.body.style.userSelect = 'none';
+                document.body.style.webkitUserSelect = 'none';
+            }
+            if (securityConfig.disableDrag) {
+                document.addEventListener('dragstart', e => e.preventDefault());
+            }
+            if (securityConfig.disableKeyboard) {
+                document.addEventListener('keydown', function(e) {
+                    const cmd = e.ctrlKey || e.metaKey;
+                    if (securityConfig.disableSave && cmd && e.key === 's') e.preventDefault();
+                    if (securityConfig.disablePrint && cmd && e.key === 'p') e.preventDefault();
+                    if (securityConfig.disableViewSource && cmd && e.key === 'u') e.preventDefault();
+                    if (securityConfig.disableCopy && cmd && e.key === 'c') e.preventDefault();
+                    if (securityConfig.disablePaste && cmd && e.key === 'v') e.preventDefault();
+                    if (securityConfig.disableSelectAll && cmd && e.key === 'a') e.preventDefault();
+                    
+                    if (securityConfig.disableDevTools) {
+                        if (e.key === 'F12' || (cmd && e.shiftKey && (e.key === 'i' || e.key === 'j' || e.key === 'c'))) {
+                            e.preventDefault();
+                        }
+                    }
+                });
+            }
         }
-        menuToggle.addEventListener('click', openSidebar);
-        mask.addEventListener('click', closeSidebar);
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
-                    closeSidebar();
-                }
-            });
-        });
+
+        document.addEventListener('DOMContentLoaded', initSecurityRestrictions);
+
+        function handleLoad() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('resumeFrame').style.display = 'block';
+        }
+
+        function handleError() {
+            document.getElementById('resumeFrame').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+
+        function retryLoad() {
+            refreshIframe();
+        }
     </script>
 </body>
 </html>
